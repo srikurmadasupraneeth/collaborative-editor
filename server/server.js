@@ -31,23 +31,25 @@ connectDB();
 // ✅ CORS Configuration (IMPORTANT FOR VERCEL + RENDER)
 // ------------------------------
 const allowedOrigins = [
-  process.env.CLIENT_URL, // from .env
+  process.env.CLIENT_URL,
   "http://localhost:3000",
   "http://127.0.0.1:3000",
-  "https://collaborative-editor-beryl.vercel.app", // your actual Vercel frontend
 ];
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests from allowedOrigins or Postman (no origin)
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (
+      !origin ||
+      allowedOrigins.includes(origin) ||
+      origin.endsWith(".vercel.app")
+    ) {
       callback(null, true);
     } else {
       console.log("❌ CORS Blocked Origin:", origin);
       callback(new Error("Not allowed by CORS"));
     }
   },
-  credentials: true, // Allow cookies & headers
+  credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
