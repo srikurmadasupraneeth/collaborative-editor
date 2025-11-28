@@ -57,14 +57,17 @@ const EditorPage = () => {
     }
 
     try {
-      const res = await fetch("http://localhost:3001/api/ai/suggestions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify({ text }),
-      });
+      const res = await fetch(
+        "https://collaborative-editor-gdfh.onrender.com/api/ai/suggestions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({ text }),
+        }
+      );
       const data = await res.json();
       setLiveAISuggestion(data.suggestion || "");
     } catch (err) {
@@ -342,10 +345,8 @@ const EditorPage = () => {
                 "strike",
                 "blockquote",
                 "list",
-                "bullet",
                 "link",
                 "image",
-                "clean",
               ]}
             />
 

@@ -5,8 +5,10 @@ const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
 
-// Config and Middleware
+// Load environment variables
 dotenv.config();
+
+// Imports
 const connectDB = require("./config/db");
 const limiter = require("./middleware/rateLimiter");
 const { socketAuth, documentHandler } = require("./websockets/documentHandler");
@@ -20,55 +22,86 @@ const aiRoutes = require("./routes/aiRoutes");
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Database Connection
+// ------------------------------
+// ✅ Connect to Database
+// ------------------------------
 connectDB();
 
-// CORS Configuration (Crucial for frontend communication)
+// ------------------------------
+// ✅ CORS Configuration (IMPORTANT FOR VERCEL + RENDER)
+// ------------------------------
+const allowedOrigins = [
+  process.env.CLIENT_URL, // from .env
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "https://collaborative-editor-beryl.vercel.app", // your actual Vercel frontend
+];
+
 const corsOptions = {
-  origin: process.env.CLIENT_URL, // e.g., 'http://localhost:3000'
+  origin: function (origin, callback) {
+    // Allow requests from allowedOrigins or Postman (no origin)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log("❌ CORS Blocked Origin:", origin);
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true, // Allow cookies & headers
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true, // Allow cookies/auth headers
 };
+
 app.use(cors(corsOptions));
 
-// Built-in Middleware
-app.use(express.json()); // Body parser for raw JSON
-app.use(limiter); // Apply rate limiting to all API requests
+// ------------------------------
+// Middleware
+// ------------------------------
+app.use(express.json()); // Body parser
+app.use(limiter); // Rate limiter
 
-// --- HTTP Routes ---
+// ------------------------------
+// Routes
+// ------------------------------
 app.use("/api/auth", authRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/ai", aiRoutes);
 
-// Simple health check route
+// Health Check
 app.get("/", (req, res) => {
-  res.send("WorkRadius AI Editor API is running...");
+  res.send("WorkRadius AI Editor API is running…");
 });
 
-// --- Socket.io Setup ---
+// ------------------------------
+// Socket.io Setup
+// ------------------------------
 const server = http.createServer(app);
 
 const io = new Server(server, {
-  cors: corsOptions,
-  // Authentication token passed via socket handshake
-  // e.g., socket.handshake.auth.token = 'Bearer xyz'
+  cors: {
+    origin: allowedOrigins,
+    credentials: true,
+  },
   path: "/socket.io",
 });
 
-// Apply JWT authentication to all incoming socket connections
+// Apply JWT socket authentication
 io.use(socketAuth);
 
-// Register the document collaboration handlers
+// Document collaboration socket handlers
 documentHandler(io);
 
-// Start the Server
+// ------------------------------
+// Start Server
+// ------------------------------
 server.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });
 
-// Graceful shutdown (optional but good practice)
-process.on("unhandledRejection", (err, promise) => {
-  console.log(`Error: ${err.message}`);
+// ------------------------------
+// Graceful Shutdown Handler
+// ------------------------------
+process.on("unhandledRejection", (err) => {
+  console.log(`Unhandled Error: ${err.message}`);
   server.close(() => process.exit(1));
 });

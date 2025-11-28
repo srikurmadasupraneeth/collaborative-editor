@@ -1,8 +1,7 @@
-// client/src/api/api.js
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:3001/api", // Matches backend server port
+  baseURL: "https://collaborative-editor-gdfh.onrender.com/api",
   withCredentials: true,
 });
 
@@ -14,9 +13,7 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 export default api;

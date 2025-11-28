@@ -1,11 +1,7 @@
-// client/src/services/socketService.js
 import { io } from "socket.io-client";
 
-const SOCKET_URL = "http://localhost:3001";
+const SOCKET_URL = "https://collaborative-editor-gdfh.onrender.com";
 
-/**
- * @returns {Socket|null}
- */
 export const initializeSocket = () => {
   const token = localStorage.getItem("token");
 
@@ -16,9 +12,7 @@ export const initializeSocket = () => {
 
   const socket = io(SOCKET_URL, {
     path: "/socket.io",
-    auth: {
-      token,
-    },
+    auth: { token },
     reconnectionAttempts: 5,
   });
 
@@ -37,9 +31,6 @@ export const initializeSocket = () => {
   return socket;
 };
 
-/**
- * @param {Socket} socket
- */
 export const disconnectSocket = (socket) => {
   if (socket) {
     socket.disconnect();
