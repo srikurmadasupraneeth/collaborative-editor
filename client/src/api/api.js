@@ -2,7 +2,7 @@ import axios from "axios";
 
 const api = axios.create({
   baseURL: "https://collaborative-editor-gdfh.onrender.com/api",
-  withCredentials: true,
+  withCredentials: false, // IMPORTANT FIX
 });
 
 api.interceptors.request.use(

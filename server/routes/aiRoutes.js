@@ -8,10 +8,27 @@ const {
   smartAutocomplete,
 } = require("../services/geminiService");
 
-// Validate text before sending to AI
+/**
+ * Helper: call an async fn with retries
+ * @param {Function} fn - async function to call
+ * @param {Array} args - arguments array
+ * @param {number} retries - number of retries (default 1 retry)
+ * @param {number} delayMs - delay between retries in ms
+ */
+const callWithRetry = async (fn, args = [], retries = 1, delayMs = 1000) => {
+  try {
+    return await fn(...args);
+  } catch (err) {
+    if (retries <= 0) throw err;
+    console.warn("AI call failed, retrying...", { message: err.message });
+    await new Promise((r) => setTimeout(r, delayMs));
+    return callWithRetry(fn, args, retries - 1, delayMs);
+  }
+};
+
 const validateText = (req, res, next) => {
   const { text } = req.body;
-  if (!text || typeof text !== "string" || text.trim().length < 5) {
+  if (!text || typeof text !== "string" || text.length < 5) {
     return res.status(400).json({
       message: "Invalid or insufficient text provided for AI analysis.",
     });
@@ -19,80 +36,84 @@ const validateText = (req, res, next) => {
   next();
 };
 
-// Generic retry wrapper (2 attempts)
-const runWithRetry = async (aiFunction, text, res, type) => {
-  try {
-    // First attempt
-    const result = await aiFunction(text);
-    return res.json(result);
-  } catch (error) {
-    console.log(`⚠️ AI Error on first attempt (${type}). Retrying in 1s...`);
-
-    // Wait 1 second
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    try {
-      // Second attempt
-      const result = await aiFunction(text);
-      return res.json(result);
-    } catch (err) {
-      console.log(`❌ AI failed again (${type}).`);
-      return res.status(503).json({
-        message: `AI Service Error: Failed to ${type}.`,
-        error: err.message,
-      });
-    }
-  }
-};
-
-// Grammar Check
+// grammar-check
 router.post("/grammar-check", protect, validateText, async (req, res) => {
-  return runWithRetry(
-    async (txt) => ({ suggestion: await grammarCheck(txt) }),
-    req.body.text,
-    res,
-    "check grammar"
-  );
+  try {
+    const result = await callWithRetry(grammarCheck, [req.body.text], 1, 1000);
+    res.json({ suggestion: result });
+  } catch (error) {
+    console.error("AI grammar-check error:", error);
+    res.status(503).json({
+      message: "AI Service Error: Failed to check grammar.",
+      error: error.message,
+    });
+  }
 });
 
-// Enhance Text
+// enhance
 router.post("/enhance", protect, validateText, async (req, res) => {
-  return runWithRetry(
-    async (txt) => ({ suggestion: await enhanceText(txt) }),
-    req.body.text,
-    res,
-    "enhance text"
-  );
+  try {
+    const result = await callWithRetry(enhanceText, [req.body.text], 1, 1000);
+    res.json({ suggestion: result });
+  } catch (error) {
+    console.error("AI enhance error:", error);
+    res.status(503).json({
+      message: "AI Service Error: Failed to enhance text.",
+      error: error.message,
+    });
+  }
 });
 
-// Summarize Text
+// summarize
 router.post("/summarize", protect, validateText, async (req, res) => {
-  return runWithRetry(
-    async (txt) => ({ summary: await summarizeText(txt) }),
-    req.body.text,
-    res,
-    "summarize text"
-  );
+  try {
+    const result = await callWithRetry(summarizeText, [req.body.text], 1, 1000);
+    res.json({ summary: result });
+  } catch (error) {
+    console.error("AI summarize error:", error);
+    res.status(503).json({
+      message: "AI Service Error: Failed to summarize text.",
+      error: error.message,
+    });
+  }
 });
 
-// Auto-complete
+// complete (autocomplete)
 router.post("/complete", protect, validateText, async (req, res) => {
-  return runWithRetry(
-    async (txt) => ({ completion: await smartAutocomplete(txt) }),
-    req.body.text,
-    res,
-    "auto-complete text"
-  );
+  try {
+    const result = await callWithRetry(
+      smartAutocomplete,
+      [req.body.text],
+      1,
+      1000
+    );
+    res.json({ completion: result });
+  } catch (error) {
+    console.error("AI autocomplete error:", error);
+    res.status(503).json({
+      message: "AI Service Error: Failed to get auto-completion.",
+      error: error.message,
+    });
+  }
 });
 
-// Suggestions
+// suggestions (smart suggestions)
 router.post("/suggestions", protect, validateText, async (req, res) => {
-  return runWithRetry(
-    async (txt) => ({ suggestion: await smartAutocomplete(txt) }),
-    req.body.text,
-    res,
-    "generate suggestions"
-  );
+  try {
+    const result = await callWithRetry(
+      smartAutocomplete,
+      [req.body.text],
+      1,
+      1000
+    );
+    res.json({ suggestion: result });
+  } catch (error) {
+    console.error("AI suggestions error:", error);
+    res.status(503).json({
+      message: "AI Service Error: Failed to get suggestions.",
+      error: error.message,
+    });
+  }
 });
 
 module.exports = router;

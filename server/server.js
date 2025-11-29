@@ -1,4 +1,3 @@
-// server/server.js
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
@@ -28,7 +27,7 @@ const PORT = process.env.PORT || 3001;
 connectDB();
 
 // ------------------------------
-// ✅ ALLOWED ORIGINS
+// ✅ CORS Configuration (IMPORTANT FOR VERCEL + RENDER)
 // ------------------------------
 const allowedOrigins = [
   process.env.CLIENT_URL,
@@ -36,11 +35,9 @@ const allowedOrigins = [
   "http://127.0.0.1:3000",
 ];
 
-// ------------------------------
-// ✅ EXPRESS CORS — (WORKS FOR API)
-// ------------------------------
 const corsOptions = {
   origin: function (origin, callback) {
+    // allow requests with no origin (Postman, curl) OR allowedOrigins OR any vercel.app preview domain
     if (
       !origin ||
       allowedOrigins.includes(origin) ||
@@ -48,7 +45,7 @@ const corsOptions = {
     ) {
       callback(null, true);
     } else {
-      console.log("❌ HTTP CORS Blocked:", origin);
+      console.log("❌ CORS Blocked Origin:", origin);
       callback(new Error("Not allowed by CORS"));
     }
   },
@@ -62,8 +59,8 @@ app.use(cors(corsOptions));
 // ------------------------------
 // Middleware
 // ------------------------------
-app.use(express.json());
-app.use(limiter);
+app.use(express.json()); // Body parser
+app.use(limiter); // Rate limiter
 
 // ------------------------------
 // Routes
@@ -72,18 +69,20 @@ app.use("/api/auth", authRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/ai", aiRoutes);
 
+// Health Check
 app.get("/", (req, res) => {
   res.send("WorkRadius AI Editor API is running…");
 });
 
 // ------------------------------
-// 🔥 SOCKET.IO (FIXED CORS!!!)
+// Socket.io Setup
 // ------------------------------
 const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: function (origin, callback) {
+    origin: (origin, callback) => {
+      // same logic as above for socket connections
       if (
         !origin ||
         allowedOrigins.includes(origin) ||
@@ -91,8 +90,8 @@ const io = new Server(server, {
       ) {
         callback(null, true);
       } else {
-        console.log("❌ Socket.IO CORS Blocked:", origin);
-        callback(new Error("Socket CORS blocked"));
+        console.log("❌ Socket.IO CORS blocked:", origin);
+        callback(new Error("Not allowed by socket CORS"));
       }
     },
     credentials: true,
@@ -110,10 +109,12 @@ documentHandler(io);
 // Start Server
 // ------------------------------
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });
 
-// Graceful Shutdown
+// ------------------------------
+// Graceful Shutdown Handler
+// ------------------------------
 process.on("unhandledRejection", (err) => {
   console.log(`Unhandled Error: ${err.message}`);
   server.close(() => process.exit(1));
