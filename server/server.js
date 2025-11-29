@@ -28,7 +28,7 @@ const PORT = process.env.PORT || 3001;
 connectDB();
 
 // ------------------------------
-// ✅ CORS Configuration (IMPORTANT FOR VERCEL + RENDER)
+// ✅ ALLOWED ORIGINS
 // ------------------------------
 const allowedOrigins = [
   process.env.CLIENT_URL,
@@ -36,6 +36,9 @@ const allowedOrigins = [
   "http://127.0.0.1:3000",
 ];
 
+// ------------------------------
+// ✅ EXPRESS CORS — (WORKS FOR API)
+// ------------------------------
 const corsOptions = {
   origin: function (origin, callback) {
     if (
@@ -45,7 +48,7 @@ const corsOptions = {
     ) {
       callback(null, true);
     } else {
-      console.log("❌ CORS Blocked Origin:", origin);
+      console.log("❌ HTTP CORS Blocked:", origin);
       callback(new Error("Not allowed by CORS"));
     }
   },
@@ -59,8 +62,8 @@ app.use(cors(corsOptions));
 // ------------------------------
 // Middleware
 // ------------------------------
-app.use(express.json()); // Body parser
-app.use(limiter); // Rate limiter
+app.use(express.json());
+app.use(limiter);
 
 // ------------------------------
 // Routes
@@ -69,19 +72,29 @@ app.use("/api/auth", authRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/ai", aiRoutes);
 
-// Health Check
 app.get("/", (req, res) => {
   res.send("WorkRadius AI Editor API is running…");
 });
 
 // ------------------------------
-// Socket.io Setup
+// 🔥 SOCKET.IO (FIXED CORS!!!)
 // ------------------------------
 const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: function (origin, callback) {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(".vercel.app")
+      ) {
+        callback(null, true);
+      } else {
+        console.log("❌ Socket.IO CORS Blocked:", origin);
+        callback(new Error("Socket CORS blocked"));
+      }
+    },
     credentials: true,
   },
   path: "/socket.io",
@@ -97,12 +110,10 @@ documentHandler(io);
 // Start Server
 // ------------------------------
 server.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
 
-// ------------------------------
-// Graceful Shutdown Handler
-// ------------------------------
+// Graceful Shutdown
 process.on("unhandledRejection", (err) => {
   console.log(`Unhandled Error: ${err.message}`);
   server.close(() => process.exit(1));
