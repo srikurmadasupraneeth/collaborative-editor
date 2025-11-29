@@ -1,195 +1,187 @@
----
-
 # 📝 WorkRadius AI Collaborative Editor
 
-### Real-time Collaborative Text Editor with AI Assistant (Google Gemini)
+### Google-Docs-Style Realtime Editor with AI Assistant (MERN + Socket.io + Gemini AI)
 
-This project is a **Google Docs–style collaborative editor** built as part of the **Software Development Engineer – Intern** assignment for **WorkRadius AI Technologies Pvt Ltd**.
-
-It includes:
-
-✅ Real-time document collaboration
-✅ Live cursor positions
-✅ Secure JWT authentication
-✅ Role-based document sharing
-✅ AI writing assistant with Google Gemini
-✅ Auto-save + Manual save
-✅ Vercel frontend + Render backend deployment
----------------------------------------------
+A fully functional **real-time collaborative text editor** with:
+✔ Multi-user editing
+✔ Live cursor tracking
+✔ AI writing assistant (Gemini 2.5 Flash)
+✔ Secure authentication
+✔ Document sharing
+✔ Autosave
+✔ Online/offline collaborator presence
+✔ Deployed backend + frontend
 
 ---
 
-# 🚀 Tech Stack
+## 🌐 Live Demo
+
+| Service               | URL                                                                                                                                                                  |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Frontend (Vercel)** | [https://collaborative-editor-lfdg38i7o-srikurmadasupraneeths-projects.vercel.app](https://collaborative-editor-lfdg38i7o-srikurmadasupraneeths-projects.vercel.app) |
+| **Backend (Render)**  | [https://collaborative-editor-gdfh.onrender.com](https://collaborative-editor-gdfh.onrender.com)                                                                     |
+
+---
+
+## 🚀 Tech Stack
 
 ### **Frontend**
 
 * React.js
-* React Quill (Rich Text Editor)
-* Quill-Cursors (Live cursors)
+* React-Quill (rich text editor)
+* Quill-Cursors (multiplayer cursors)
 * Axios
-* Bootstrap UI
+* Bootstrap
 
 ### **Backend**
 
-* Node.js + Express.js
-* MongoDB + Mongoose
+* Node.js + Express
+* MongoDB (Atlas)
 * JWT Authentication
-* Socket.IO for realtime sync
-* Google Gemini API
-* Express Rate Limiting
-* CORS Security Setup
+* Socket.io (Realtime Collaboration)
+* Google Gemini 2.5 Flash for AI
+* Rate limiting, security middleware
 
 ### **Deployment**
 
-* Frontend → Vercel
-* Backend → Render
-* MongoDB → Atlas
+* **Frontend** → Vercel
+* **Backend** → Render
+* CORS enabled for all Vercel preview URLs
 
 ---
 
----
+## 🔐 Features Implemented
 
-# 📌 Core Features
+### 1️⃣ **User Authentication**
 
-## 1️⃣ Authentication & Authorization
-
-* Register / Login
-* JWT token stored in browser
-* `/auth/me` to auto-login users on refresh
-* Role-based authorization:
-
-  * **Owner**
-  * **Editor**
-  * **Viewer**
+✔ Register, Login, Logout
+✔ JWT-based authentication
+✔ Protected routes
+✔ Auto-login using saved token
+✔ Secure password hashing (bcrypt)
 
 ---
 
-## 2️⃣ Document Management
+### 2️⃣ **Document Management**
 
-* Create new documents
-* View list of documents
-* Auto-save every 30 seconds
-* Manual save option
-* Share documents by email with role:
+✔ Create new documents
+✔ List all documents shared with the user
+✔ Autosave every 30 seconds
+✔ Manual Save
+✔ Delete documents (owner only)
+✔ Role-based access
 
-  * `editor`
-  * `viewer`
-
----
-
-## 3️⃣ Real-time Collaboration
-
-✔ Multi-user editing
-✔ Live cursor tracking
-✔ Remote text updates using Quill Delta
-✔ Online/offline indicators
-✔ Broadcast “document saved” event
+* **Owner**
+* **Editor**
+* **Viewer**
 
 ---
 
-## 4️⃣ AI Writing Assistant (Google Gemini)
+### 3️⃣ **Real-Time Collaboration (Socket.io)**
 
-Provides 5 AI features:
-
-| Feature           | Endpoint                |
-| ----------------- | ----------------------- |
-| Grammar check     | `/api/ai/grammar-check` |
-| Text enhancement  | `/api/ai/enhance`       |
-| Summaries         | `/api/ai/summarize`     |
-| Auto-complete     | `/api/ai/complete`      |
-| Smart suggestions | `/api/ai/suggestions`   |
-
-Debounced **live suggestions** appear as user types.
+✔ Live text synchronization
+✔ Real-time cursor tracking using Quill-Cursors
+✔ Multi-user presence (online/offline indicator)
+✔ Join/leave document rooms
+✔ Broadcast content changes instantly
+✔ Broadcast cursor movement instantly
 
 ---
 
-## 5️⃣ Security
+### 4️⃣ **AI Writing Assistant (Gemini 2.5 Flash)**
 
-* JWT-based route protection
-* Rate limiting (`100 requests / 15 mins`)
-* XSS-safe Quill delta format
-* CORS strict allowlist
-* Socket.io authentication with JWT
+Integrated with 5 powerful features:
+
+✔ Grammar & Style Check
+✔ Enhance Writing
+✔ Summarize Text
+✔ Smart Auto-Completion
+✔ Smart Suggestions (context-aware)
+
+Includes:
+
+* Rate limiting
+* Retry logic for AI API failures
+* Live AI suggestions as user types
 
 ---
 
+### 5️⃣ **Security Features**
+
+✔ Rate limiting (100 requests/15 min per IP)
+✔ Protected API routes
+✔ Protected socket connections (JWT in handshake)
+✔ Sanitized input
+✔ CORS restrictions (supports all Vercel preview URLs)
+✔ Environment variables for secrets
+✔ Prevent unauthorized access to documents
+
 ---
 
-# 📂 Project Structure
-
-### **Backend** (`server/`)
+## 🏗 Project Structure
 
 ```
-server/
-├── config/db.js
-├── middleware/auth.js
-├── middleware/rateLimiter.js
-├── models/User.js
-├── models/Document.js
-├── routes/authRoutes.js
-├── routes/documentRoutes.js
-├── routes/aiRoutes.js
-├── services/geminiService.js
-├── websockets/documentHandler.js
-└── server.js
-```
+/server
+  /config        # DB, JWT, Gemini setup
+  /models        # User & Document models
+  /routes        # auth, documents, ai
+  /websockets    # socket handlers
+  /middleware    # auth + rate limiting
+  /services      # Gemini AI service
+  server.js
 
-### **Frontend** (`client/`)
-
-```
-client/src/
-├── api/
-│   ├── api.js
-│   ├── auth.js
-│   └── document.js
-├── components/
-│   ├── Navbar.js
-│   └── AIAssistant.js
-├── hooks/useAuth.js
-├── pages/
-│   ├── Auth.js
-│   ├── DocumentList.js
-│   └── EditorPage.js
-├── services/socketService.js
-└── App.js
+/client
+  /src
+    /components  # Navbar, AI Assistant
+    /pages       # Auth, DocumentList, EditorPage
+    /services    # Socket client
+    /api         # Axios wrappers
+    /hooks       # Auth hook
+    App.js
+    index.js
 ```
 
 ---
 
+## ⚙️ Installation & Setup (Local Development)
+
+### 1️⃣ Clone Repo
+
+```bash
+git clone <your-repo-url>
+cd project-folder
+```
+
 ---
 
-# ⚙️ Environment Variables
+### 2️⃣ Backend Setup
 
-Create a `.env` in your backend:
+```bash
+cd server
+npm install
+```
+
+Create `.env`:
 
 ```
 PORT=3001
-MONGO_URI=YOUR_MONGO_STRING
-JWT_SECRET=YOUR_JWT_SECRET
-JWT_EXPIRATION=30d
-
-CLIENT_URL=https://your-frontend.vercel.app
-
-GEMINI_API_KEY=YOUR_GEMINI_KEY
+MONGO_URI=your_mongodb_url
+JWT_SECRET=your_jwt_secret
+CLIENT_URL=http://localhost:3000
+GEMINI_API_KEY=your_gemini_api_key
 ```
 
----
+Run server:
 
----
-
-# ▶️ Running Locally
-
-## Backend
-
-```
-cd server
-npm install
+```bash
 npm start
 ```
 
-## Frontend
+---
 
-```
+### 3️⃣ Frontend Setup
+
+```bash
 cd client
 npm install
 npm start
@@ -197,44 +189,9 @@ npm start
 
 ---
 
----
+## 🔌 WebSocket Events Implemented
 
-# 🌐 Deployment
-
-### Frontend → **Vercel**
-
-1. `npm run build`
-2. Deploy folder `/client`
-3. Set env:
-
-```
-REACT_APP_API_URL=https://your-backend.onrender.com/api
-```
-
----
-
-### Backend → **Render**
-
-1. Connect GitHub repo
-2. Set environment variables
-3. Start command:
-
-```
-node server.js
-```
-
-4. Enable CORS correctly:
-
-   * allow Vercel domain
-   * allow `*.vercel.app`
-
----
-
----
-
-# 📡 WebSocket Events
-
-### Sent
+### Client → Server
 
 * `join-document`
 * `leave-document`
@@ -242,7 +199,7 @@ node server.js
 * `cursor-move`
 * `document-saved`
 
-### Received
+### Server → Client
 
 * `active-users`
 * `user-joined`
@@ -252,35 +209,15 @@ node server.js
 
 ---
 
----
+## 🔮 Future Improvements
 
-# 🧠 AI Endpoints
+These can be added easily:
 
-Example:
-
-```
-POST /api/ai/enhance
-{
-  "text": "your content"
-}
-```
-
-Response:
-
-```
-{
-  "suggestion": "Improved version..."
-}
-```
-
----
-
-# 🎯 Future Improvements
-
-* Version history
-* Comments system
-* AI tone detection
-* Offline editing
-* WebRTC-based P2P sync
+⭐ Document version history
+⭐ Comments + suggestions mode
+⭐ Offline mode
+⭐ AI tone analysis
+⭐ Full multi-cursor avatars
+⭐ Export to PDF / Word
 
 ---
